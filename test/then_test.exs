@@ -293,4 +293,290 @@ defmodule ThenTest do
       assert_received {:private_callback_called, 50}
     end
   end
+
+  defmodule ExternalCallbackHelper do
+    def track_operation(result) do
+      send(self(), {:external_tracked, result})
+    end
+
+    def audit_with_prefix(result) do
+      send(self(), {:external_audit, "AUDIT: #{result}"})
+    end
+
+    def handle_tuple({status, value}) do
+      send(self(), {:external_tuple, status, value})
+    end
+
+    def handle_tuple(other) do
+      send(self(), {:external_other, other})
+    end
+  end
+
+  defmodule ExternalCallbackModule do
+    use Then
+
+    @then {ExternalCallbackHelper, :track_operation}
+    def calculate(a, b) do
+      a + b
+    end
+
+    @then {ExternalCallbackHelper, :audit_with_prefix}
+    def multiply(a, b) do
+      a * b
+    end
+
+    @then {ExternalCallbackHelper, :handle_tuple}
+    def create_result(status, value) do
+      {status, value}
+    end
+
+    @then {ExternalCallbackHelper, :handle_tuple}
+    def log_operation(value) do
+      "Operation: #{value}"
+    end
+  end
+
+  describe "external module callbacks" do
+    test "calls function from external module" do
+      result = ExternalCallbackModule.calculate(3, 4)
+
+      assert result == 7
+      assert_received {:external_tracked, 7}
+    end
+
+    test "calls different external module functions" do
+      result1 = ExternalCallbackModule.calculate(2, 3)
+      result2 = ExternalCallbackModule.multiply(4, 5)
+
+      assert result1 == 5
+      assert result2 == 20
+      assert_received {:external_tracked, 5}
+      assert_received {:external_audit, "AUDIT: 20"}
+    end
+
+    test "handles complex return types with external callbacks" do
+      result = ExternalCallbackModule.create_result(:ok, "success")
+
+      assert result == {:ok, "success"}
+      assert_received {:external_tuple, :ok, "success"}
+    end
+
+    test "works with string return values" do
+      result = ExternalCallbackModule.log_operation("test")
+
+      assert result == "Operation: test"
+      assert_received {:external_other, "Operation: test"}
+    end
+  end
+
+  defmodule MixedCallbacksModule do
+    use Then
+
+    @then :local_callback
+    def local_function(x) do
+      x * 2
+    end
+
+    @then {ExternalCallbackHelper, :track_operation}
+    def external_function(x) do
+      x * 3
+    end
+
+    def local_callback(result) do
+      send(self(), {:local_mixed, result})
+    end
+  end
+
+  describe "mixed local and external callbacks" do
+    test "supports both local and external callbacks in same module" do
+      result1 = MixedCallbacksModule.local_function(5)
+      result2 = MixedCallbacksModule.external_function(5)
+
+      assert result1 == 10
+      assert result2 == 15
+      assert_received {:local_mixed, 10}
+      assert_received {:external_tracked, 15}
+    end
+  end
+
+  describe "invalid callback formats" do
+    test "raises error for invalid callback format" do
+      code = quote do
+        defmodule InvalidCallbackModule do
+          use Then
+
+          @then "invalid_string"
+          def test_function do
+            :result
+          end
+        end
+      end
+
+      assert_raise CompileError, ~r/Invalid @then format/, fn ->
+        Code.compile_quoted(code)
+      end
+    end
+
+    test "raises error for incomplete tuple format" do
+      code = quote do
+        defmodule IncompleteCallbackModule do
+          use Then
+
+          @then {SomeModule}
+          def test_function do
+            :result
+          end
+        end
+      end
+
+      assert_raise CompileError, ~r/Invalid @then format/, fn ->
+        Code.compile_quoted(code)
+      end
+    end
+
+    test "raises error for non-atom module name" do
+      code = quote do
+        defmodule NonAtomModuleCallback do
+          use Then
+
+          @then {"StringModule", :function}
+          def test_function do
+            :result
+          end
+        end
+      end
+
+      assert_raise CompileError, ~r/Invalid @then format/, fn ->
+        Code.compile_quoted(code)
+      end
+    end
+
+    test "raises error for non-atom function name" do
+      code = quote do
+        defmodule NonAtomFunctionCallback do
+          use Then
+
+          @then {SomeModule, "string_function"}
+          def test_function do
+            :result
+          end
+        end
+      end
+
+      assert_raise CompileError, ~r/Invalid @then format/, fn ->
+        Code.compile_quoted(code)
+      end
+    end
+  end
+
+  defmodule MultipleExternalCallbacksModule do
+    use Then
+
+    @then {ExternalCallbackHelper, :track_operation}
+    def first_function(x) do
+      x + 1
+    end
+
+    @then {ExternalCallbackHelper, :audit_with_prefix}
+    def second_function(x) do
+      x + 2
+    end
+  end
+
+  describe "multiple external callbacks in same module" do
+    test "each function calls its own external callback" do
+      result1 = MultipleExternalCallbacksModule.first_function(10)
+      result2 = MultipleExternalCallbacksModule.second_function(20)
+
+      assert result1 == 11
+      assert result2 == 22
+      assert_received {:external_tracked, 11}
+      assert_received {:external_audit, "AUDIT: 22"}
+    end
+  end
+
+  defmodule ArityTestModule do
+    use Then
+
+    @then :log_arity_0
+    def process do
+      "no args"
+    end
+
+    @then :log_arity_1
+    def process(x) do
+      "one arg: #{x}"
+    end
+
+    @then :log_arity_2
+    def process(x, y) do
+      "two args: #{x}, #{y}"
+    end
+
+    @then :log_arity_3
+    def process(x, y, z) do
+      "three args: #{x}, #{y}, #{z}"
+    end
+
+    @then :log_calculation
+    def calculate(a, b, c, d) do
+      a + b + c + d
+    end
+
+    def log_arity_0(result) do
+      send(self(), {:arity_0, result})
+    end
+
+    def log_arity_1(result) do
+      send(self(), {:arity_1, result})
+    end
+
+    def log_arity_2(result) do
+      send(self(), {:arity_2, result})
+    end
+
+    def log_arity_3(result) do
+      send(self(), {:arity_3, result})
+    end
+
+    def log_calculation(result) do
+      send(self(), {:calculation, result})
+    end
+  end
+
+  describe "functions with different arities" do
+    test "distinguishes functions by name AND arity" do
+      result0 = ArityTestModule.process()
+      result1 = ArityTestModule.process("a")
+      result2 = ArityTestModule.process("a", "b")
+      result3 = ArityTestModule.process("a", "b", "c")
+
+      assert result0 == "no args"
+      assert result1 == "one arg: a"
+      assert result2 == "two args: a, b"
+      assert result3 == "three args: a, b, c"
+
+      assert_received {:arity_0, "no args"}
+      assert_received {:arity_1, "one arg: a"}
+      assert_received {:arity_2, "two args: a, b"}
+      assert_received {:arity_3, "three args: a, b, c"}
+    end
+
+    test "works with higher arity functions" do
+      result = ArityTestModule.calculate(1, 2, 3, 4)
+
+      assert result == 10
+      assert_received {:calculation, 10}
+    end
+
+    test "each arity gets its own callback independently" do
+      ArityTestModule.process("x", "y")
+      ArityTestModule.process()
+      ArityTestModule.process("z")
+
+      assert_received {:arity_2, "two args: x, y"}
+      assert_received {:arity_0, "no args"}
+      assert_received {:arity_1, "one arg: z"}
+    end
+  end
 end
