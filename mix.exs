@@ -36,12 +36,12 @@ defmodule Then.MixProject do
 
   defp docs do
     [
-      main: "then",
+      main: "getting-started",
       source_url: "https://github.com/bardoor/then",
       extras: [
-        "docs/then.md",
-        "CHANGELOG.md",
-        "LICENSE"
+        {"docs/then.md", title: "Getting Started", filename: "getting-started"},
+        {"CHANGELOG.md", title: "Changelog"},
+        {"LICENSE", title: "License"}
       ],
       groups_for_extras: [
         "Documentation": ["docs/then.md"],
