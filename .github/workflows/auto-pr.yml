@@ -1,0 +1,38 @@
+name: Auto Pull Request
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-pr:
+    name: Create Pull Request
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Auto-created PR from ${{ github.ref_name }}"
+          title: "${{ github.ref_name }}"
+          body: |
+            This PR was automatically created from branch `${{ github.ref_name }}`.
+          branch: ${{ github.ref_name }}
+          base: main
+          assignees: ${{ github.actor }}
+          draft: false
+          delete-branch: false
+
