@@ -1,5 +1,7 @@
 defmodule ThenTest do
   use ExUnit.Case
+  import ExUnit.CaptureIO
+
   doctest Then
 
   defmodule TestModule do
@@ -577,6 +579,27 @@ defmodule ThenTest do
       assert_received {:arity_2, "two args: x, y"}
       assert_received {:arity_0, "no args"}
       assert_received {:arity_1, "one arg: z"}
+    end
+  end
+
+  describe "aliased external modules" do
+    test "works with aliased modules" do
+      defmodule AliasedTest do
+        alias IO, as: MyIO
+        use Then
+
+        @then {MyIO, :puts}
+        def test_aliased_call(value) do
+          value * 2
+        end
+      end
+
+      output = capture_io(fn ->
+        result = AliasedTest.test_aliased_call(5)
+        assert result == 10
+      end)
+
+      assert output == "10\n"
     end
   end
 end
