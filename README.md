@@ -1,5 +1,10 @@
 # Then
 
+[![Elixir CI](https://github.com/bardoor/then/actions/workflows/elixir.yml/badge.svg)](https://github.com/bardoor/then/actions/workflows/elixir.yml)
+[![Hex.pm Version](https://img.shields.io/hexpm/v/then.svg)](https://hex.pm/packages/then)
+[![Hex.pm Downloads](https://img.shields.io/hexpm/dt/then.svg)](https://hex.pm/packages/then)
+[![Documentation](https://img.shields.io/badge/docs-hexdocs-blue.svg)](https://hexdocs.pm/then)
+
 Because sometimes you want to do something *after* a function, but don't want to clutter its code.
 
 ## Installation
