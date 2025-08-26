@@ -7,17 +7,20 @@
 
 Because sometimes you want to do something *after* a function, but don't want to clutter its code.
 
+Put `@then :callback` or `@then {Module, :callback}` above a function and it will automatically 
+call the callback after execution. Function result stays unchanged, callback is called for side effects.
+
 ## Installation
 
 ```elixir
 def deps do
-  [{:then, "~> 1.0.0"}]
+  [{:then, "~> 1.2.0"}]
 end
 ```
 
-## How it works
+## Basic Usage
 
-Put `@then :callback` above a function and it will automatically call `callback(result)` after execution:
+### Simple Local Callbacks
 
 ```elixir
 defmodule MyModule do
@@ -38,11 +41,47 @@ MyModule.add(2, 3)
 # => 5
 ```
 
-Function result stays unchanged, callback is called for side effects.
+### External Module Callbacks
 
-## Why you need this
+You can also call functions from other modules:
 
-For logging, metrics, notifications — all the stuff you don't want mixed with your main logic:
+```elixir
+defmodule Calculator do
+  use Then
+
+  @then {IO, :puts}
+  def multiply(a, b) do
+    a * b
+  end
+
+  @then {MyAudit, :track_operation}
+  def divide(a, b) when b != 0 do
+    a / b
+  end
+end
+
+defmodule MyAudit do
+  def track_operation(result) do
+    IO.puts("Operation completed with result: #{result}")
+  end
+end
+```
+
+**Aliased modules work too:**
+
+```elixir
+defmodule Calculator do
+  alias IO, as: MyIO
+  use Then
+
+  @then {MyIO, :puts}
+  def calculate(x) do
+    x * 2
+  end
+end
+```
+
+### Real-world Example
 
 ```elixir
 defmodule UserService do
@@ -52,28 +91,22 @@ defmodule UserService do
   def new_user(params) do
     case params do
       %{email: email, name: name} -> {:ok, %User{name: name, email: email}}
-      _ -> {:error, "Required fileds are missing"}
+      _ -> {:error, "Required fields are missing"}
     end
   end
 
   # side effects separately
-  def audit_creation({:ok, user}), do: Logger.info("User #{user.email} created")
-  def audit_creation({:error, reason}), do: Logger.warn("User wasn't created. #{reason}")
+  def audit_creation({:ok, user}), do: IO.puts("✅ User #{user.email} created")
+  def audit_creation({:error, reason}), do: IO.puts("❌ User creation failed: #{reason}")
 end
 ```
 
-## Limitations
-
-- One `@then` per function (compilation error if you try to use multiple)
-- Callback is not called if function raises an exception
-- For functions with multiple clauses, `@then` applies to all clauses
-
-## Compatibility
+### Compatibility
 
 Works perfectly with other function attributes:
 
 ```elixir
-defmodule MyModule do
+defmodule MyService do
   use Then
 
   @doc "Gets age from params"
@@ -84,12 +117,25 @@ defmodule MyModule do
   end
 
   defp log_term(term), do: IO.puts("[log-term] #{term}")
-
 end
 ```
 
-`@spec`, `@doc`, `@deprecated` and other attributes work as expected. Callback functions can be private (`defp`).
+`@spec`, `@doc`, `@deprecated` and other attributes work as expected.
+Callback functions can be private (`defp`).
 
-## Why not just call the callback at the end of the function?
+### Limitations
 
-It's simple and clear. Move log and other side-effects out of your beautiful logic.
+- One `@then` per function (compilation error if you try to use multiple)
+- Callback is not called if function raises an exception
+- For functions with multiple clauses, `@then` applies to all clauses
+- External module callbacks must be available at compile time
+
+### Callback Formats
+
+`@then` accepts two formats:
+- `:function_name` - calls local function
+- `{ModuleName, :function_name}` - calls function from external module
+
+### Why Use This?
+
+It's simple and clear. Move log and other side-effects out of your b

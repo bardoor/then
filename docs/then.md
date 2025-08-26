@@ -9,7 +9,7 @@ call the callback after execution. Function result stays unchanged, callback is 
 
 ```elixir
 def deps do
-  [{:then, "~> 1.1.0"}]
+  [{:then, "~> 1.2.0"}]
 end
 ```
 
