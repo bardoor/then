@@ -7,7 +7,7 @@ on:
       - master
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
 
 jobs:
@@ -18,21 +18,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Create Pull Request
-        id: cpr
-        uses: peter-evans/create-pull-request@v7
+        uses: repo-sync/pull-request@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Auto-created PR from ${{ github.ref_name }}"
-          title: "${{ github.ref_name }}"
-          body: |
-            This PR was automatically created from branch `${{ github.ref_name }}`.
-          branch: ${{ github.ref_name }}
-          base: main
-          assignees: ${{ github.actor }}
-          draft: false
-          delete-branch: false
+          source_branch: ${{ github.ref_name }}
+          destination_branch: main
+          pr_title: ${{ github.ref_name }}
+          pr_body: "This PR was automatically created from branch `${{ github.ref_name }}`."
+          pr_assignee: ${{ github.actor }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
