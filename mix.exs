@@ -40,12 +40,12 @@ defmodule Then.MixProject do
       source_url: "https://github.com/bardoor/then",
       extras: [
         "docs/then.md",
-        "docs/changelog.md",
-        "docs/license.md"
+        "CHANGELOG.md",
+        "LICENSE"
       ],
       groups_for_extras: [
         "Documentation": ["docs/then.md"],
-        "Legal": ["docs/changelog.md", "docs/license.md"]
+        "Legal": ["CHANGELOG.md", "LICENSE"]
       ]
     ]
   end

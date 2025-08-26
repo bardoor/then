@@ -123,4 +123,4 @@ It's simple and clear. Move log and other side-effects out of your beautiful log
 
 ## License
 
-`Then` is released under the MIT License - see the [LICENSE](license.html) file.
+`Then` is released under the MIT License - see the [LICENSE](../LICENSE) file.
