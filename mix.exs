@@ -7,19 +7,35 @@ defmodule Then.MixProject do
       version: "1.0.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      name: "Then",
+      description: description(),
+      package: package()
+    ]
+  end
+
+  def description do
+    "Simple way to set after-function callback"
+  end
+
+  def package do
+    [
+      name: "then",
+      files: ~w(lib .formatter.exs mix.exs README* LICENSE* CHANGELOG*),
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/bardoor/then"}
     ]
   end
 
   def application do
     [
-      extra_applications: [:logger]
+      # nope
     ]
   end
 
   defp deps do
     [
-      # nope
+      {:ex_doc, "~> 0.14", only: :dev, runtime: false}
     ]
   end
 end
