@@ -44,7 +44,7 @@ You can also call functions from other modules:
 defmodule Calculator do
   use Then
 
-  @then {Logger, :info}
+  @then {IO, :puts}
   def multiply(a, b) do
     a * b
   end
@@ -58,6 +58,20 @@ end
 defmodule MyAudit do
   def track_operation(result) do
     IO.puts("Operation completed with result: #{result}")
+  end
+end
+```
+
+**Aliased modules work too:**
+
+```elixir
+defmodule Calculator do
+  alias IO, as: MyIO
+  use Then
+
+  @then {MyIO, :puts}
+  def calculate(x) do
+    x * 2
   end
 end
 ```
@@ -77,8 +91,8 @@ defmodule UserService do
   end
 
   # side effects separately
-  def audit_creation({:ok, user}), do: Logger.info("User #{user.email} created")
-  def audit_creation({:error, reason}), do: Logger.warn("User wasn't created. #{reason}")
+  def audit_creation({:ok, user}), do: IO.puts("✅ User #{user.email} created")
+  def audit_creation({:error, reason}), do: IO.puts("❌ User creation failed: #{reason}")
 end
 ```
 
