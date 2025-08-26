@@ -4,13 +4,14 @@ defmodule Then.MixProject do
   def project do
     [
       app: :then,
-      version: "1.0.0",
+      version: "1.1.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       name: "Then",
       description: description(),
-      package: package()
+      package: package(),
+      docs: docs()
     ]
   end
 
@@ -30,6 +31,22 @@ defmodule Then.MixProject do
   def application do
     [
       # nope
+    ]
+  end
+
+  defp docs do
+    [
+      main: "then",
+      source_url: "https://github.com/bardoor/then",
+      extras: [
+        "docs/then.md",
+        "CHANGELOG.md",
+        "LICENSE"
+      ],
+      groups_for_extras: [
+        "Documentation": ["docs/then.md"],
+        "Legal": ["CHANGELOG.md", "LICENSE"]
+      ]
     ]
   end
 
