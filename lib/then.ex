@@ -11,13 +11,19 @@ defmodule Then do
   defmacro __using__(_opts) do
     quote do
       Module.register_attribute(__MODULE__, :then, persist: false)
-      Module.register_attribute(__MODULE__, :functions_with_then, accumulate: true, persist: false)
+
+      Module.register_attribute(__MODULE__, :functions_with_then,
+        accumulate: true,
+        persist: false
+      )
+
       @on_definition Then
       @before_compile Then
     end
   end
 
-  def __on_definition__(env, kind, function_name, args, _guards, _body) when kind in [:def, :defp] do
+  def __on_definition__(env, kind, function_name, args, _guards, _body)
+      when kind in [:def, :defp] do
     then_callback = Module.get_attribute(env.module, :then)
 
     if then_callback do
@@ -32,11 +38,16 @@ defmodule Then do
         raise CompileError,
           file: env.file,
           line: env.line,
-          description: "Multiple @then attributes for function #{function_name}/#{arity}. " <>
-                      "Only one @then per function is allowed."
+          description:
+            "Multiple @then attributes for function #{function_name}/#{arity}. " <>
+              "Only one @then per function is allowed."
       end
 
-      Module.put_attribute(env.module, :functions_with_then, {function_name, arity, validated_callback})
+      Module.put_attribute(
+        env.module,
+        :functions_with_then,
+        {function_name, arity, validated_callback}
+      )
     end
   end
 
@@ -62,7 +73,8 @@ defmodule Then do
         raise CompileError,
           file: env.file,
           line: env.line,
-          description: "Invalid @then format. Expected :function_name or {Module, :function_name}, got: #{inspect(callback)}"
+          description:
+            "Invalid @then format. Expected :function_name or {Module, :function_name}, got: #{inspect(callback)}"
     end
   end
 
